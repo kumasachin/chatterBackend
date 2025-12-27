@@ -48,10 +48,10 @@ app.use("/api/analytics", analyticsRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
-  res.json({ 
-    status: "OK", 
+  res.json({
+    status: "OK",
     timestamp: new Date().toISOString(),
-    routes: ["auth", "messages", "friend-requests", "ai", "analytics"]
+    routes: ["auth", "messages", "friend-requests", "ai", "analytics"],
   });
 });
 
@@ -68,11 +68,24 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-server.listen(PORT, () => {
-  console.log("server is running on PORT:" + PORT);
-  connectDB();
-  // Initialize AI Bot after database connection
-  setTimeout(() => {
-    initializeAIBot();
-  }, 1000);
-});
+// Connect to database BEFORE starting the server
+const startServer = async () => {
+  try {
+    // Connect to MongoDB first
+    await connectDB();
+
+    // Initialize AI Bot after successful database connection
+    await initializeAIBot();
+
+    // Start the server only after database is ready
+    server.listen(PORT, () => {
+      console.log(`Server is running on PORT: ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
+// Start the application
+startServer();

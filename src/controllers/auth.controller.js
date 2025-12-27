@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js";
 import { validateUserName } from "../utils/messageCensorship.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import {
   sendVerificationEmail,
   sendResetVerificationEmail,
@@ -175,8 +176,8 @@ export const login = async (req, res) => {
       _id: user._id,
       name: user.name,
       profile: user.profile,
-      token: token,
-      isFirstLogin: isFirstLogin,
+      token,
+      isFirstLogin,
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -187,6 +188,13 @@ export const login = async (req, res) => {
 // Guest login handler - creates a temporary guest user
 export const guestLogin = async (req, res) => {
   try {
+    // Check if database is connected
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        message: "Service temporarily unavailable. Database connection error.",
+      });
+    }
+
     // Generate a unique guest username with timestamp
     const guestNumber = Date.now().toString().slice(-6);
     const guestUsername = `Guest_${guestNumber}`;
@@ -204,10 +212,18 @@ export const guestLogin = async (req, res) => {
     await guestUser.save();
 
     // Automatically add AI bot as friend for guest users
-    await autoAddAIBotFriend(guestUser._id);
-    
+    try {
+      await autoAddAIBotFriend(guestUser._id);
+    } catch (error) {
+      // Continue even if AI bot friend add fails
+    }
+
     // Send welcome message from ChatterBot
-    await sendWelcomeMessage(guestUser._id);
+    try {
+      await sendWelcomeMessage(guestUser._id);
+    } catch (error) {
+      // Continue even if welcome message fails
+    }
 
     const token = generateToken(guestUser._id, res);
 
@@ -215,12 +231,23 @@ export const guestLogin = async (req, res) => {
       _id: guestUser._id,
       name: guestUser.name,
       profile: guestUser.profile,
-      token: token,
+      token,
       isGuest: true,
     });
   } catch (error) {
     console.error("Guest login error:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+
+    // Provide more specific error messages
+    if (error.name === "MongooseError" || error.name === "MongoError") {
+      return res.status(503).json({
+        message: "Database connection error. Please try again later.",
+      });
+    }
+
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 };
 export const logout = (req, res) => {

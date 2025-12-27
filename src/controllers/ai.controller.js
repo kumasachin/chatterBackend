@@ -35,7 +35,7 @@ const GREETING_RESPONSES = [
 ];
 
 // Send welcome message from ChatterBot to new users
-export const sendWelcomeMessage = async (userId) => {
+export const sendWelcomeMessage = async userId => {
   try {
     // Get or create AI bot
     const aiBot = await createAIBot();
@@ -80,9 +80,8 @@ Ready to explore? What would you like to know first? 😊
     // Create welcome message
     const welcomeMessage = new Message({
       senderId: aiBot._id,
-      receiverId: userId,
-      message: personalizedWelcome,
-      timestamp: new Date(),
+      recipientId: userId,
+      content: personalizedWelcome,
     });
 
     await welcomeMessage.save();
@@ -127,7 +126,7 @@ export const createAIBot = async () => {
 };
 
 // Fallback response system for when Gemini API is unavailable
-const getFallbackResponse = (userMessage) => {
+const getFallbackResponse = userMessage => {
   const message = userMessage.toLowerCase();
 
   // Greeting patterns
@@ -230,7 +229,7 @@ export const generateAIResponse = async (
       conversationHistory.length > 0
         ? `Previous conversation context: ${conversationHistory
             .slice(-3)
-            .map((msg) => `${msg.role}: ${msg.content}`)
+            .map(msg => `${msg.role}: ${msg.content}`)
             .join("\n")}\n\n`
         : "";
 
@@ -305,15 +304,15 @@ export const sendAIMessage = async (req, res) => {
     // Create message from AI bot to user
     const newMessage = new Message({
       senderId: aiBot._id,
-      receiverId: recipientId,
-      message: aiResponse,
+      recipientId,
+      content: aiResponse,
     });
 
     await newMessage.save();
 
     // Populate sender and receiver info
     await newMessage.populate("senderId", "name profile");
-    await newMessage.populate("receiverId", "name profile");
+    await newMessage.populate("recipientId", "name profile");
 
     res.status(201).json(newMessage);
   } catch (error) {
@@ -347,7 +346,7 @@ export const initializeAIBot = async () => {
 };
 
 // Automatically add AI bot as friend for guest users
-export const autoAddAIBotFriend = async (userId) => {
+export const autoAddAIBotFriend = async userId => {
   try {
     const user = await User.findById(userId);
     const aiBot = await User.findOne({ name: "ChatterBot" });
