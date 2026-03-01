@@ -3,7 +3,6 @@ import {
   getAIBot,
   sendAIMessage,
   testAIConnection,
-  initializeAIBot,
 } from "../controllers/ai.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 

@@ -133,7 +133,7 @@ export const sendMessage = async (req, res) => {
           // Get recent conversation history for context
           const recentMessages = await Message.find({
             $or: [
-              { senderId: senderId, recipientId: recipientId },
+              { senderId, recipientId },
               { senderId: recipientId, recipientId: senderId },
             ],
           })
@@ -141,7 +141,7 @@ export const sendMessage = async (req, res) => {
             .limit(6)
             .populate("senderId", "name");
 
-          const conversationHistory = recentMessages.reverse().map((msg) => ({
+          const conversationHistory = recentMessages.reverse().map(msg => ({
             role:
               msg.senderId._id.toString() === senderId.toString()
                 ? "user"
@@ -167,7 +167,7 @@ export const sendMessage = async (req, res) => {
           // Emit AI response to the original sender
           const senderSocketIds = getReceiverSocketIds(senderId);
           if (senderSocketIds.length > 0) {
-            senderSocketIds.forEach((socketId) => {
+            senderSocketIds.forEach(socketId => {
               io.to(socketId).emit("newMessage", aiMessage);
             });
           }

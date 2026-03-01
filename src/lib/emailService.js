@@ -74,7 +74,7 @@ export const sendVerificationEmail = async user => {
   }
 };
 
-export const sendWelcomeEmail = async (user) => {
+export const sendWelcomeEmail = async user => {
   try {
     console.log("Sending welcome email to user:", {
       _id: user._id,
@@ -232,7 +232,7 @@ export const sendWelcomeEmail = async (user) => {
   }
 };
 
-export const sendResetVerificationEmail = async (user) => {
+export const sendResetVerificationEmail = async user => {
   try {
     console.log("sendVerificationEmail called with user:", {
       _id: user._id,

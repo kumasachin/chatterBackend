@@ -195,15 +195,17 @@ export const guestLogin = async (req, res) => {
       });
     }
 
-    // Generate a unique guest username with timestamp
+    // Generate a unique guest username with full timestamp + random suffix
     const guestNumber = Date.now().toString().slice(-6);
-    const guestUsername = `Guest_${guestNumber}`;
+    const randomSuffix = Math.random().toString(36).slice(2, 7);
+    const uniqueId = `${guestNumber}${randomSuffix}`;
+    const guestUsername = `Guest_${uniqueId}`;
 
     // Create a temporary guest user (no password, email, etc.)
     const guestUser = new User({
       name: guestUsername,
       fullName: `Guest User ${guestNumber}`,
-      email: `guest_${guestNumber}@chatter.local`,
+      email: `guest_${uniqueId}@chatter.local`,
       password: await bcrypt.hash("guest123", 10), // Simple password for guests
       profile: "/avatar-demo.html", // Default guest avatar
       isGuest: true, // Mark as guest user
@@ -241,6 +243,13 @@ export const guestLogin = async (req, res) => {
     if (error.name === "MongooseError" || error.name === "MongoError") {
       return res.status(503).json({
         message: "Database connection error. Please try again later.",
+      });
+    }
+
+    // Duplicate key (e.g. email collision) — retry is safe, surface it clearly
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "Could not create guest session. Please try again.",
       });
     }
 
