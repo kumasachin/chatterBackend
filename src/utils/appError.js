@@ -13,7 +13,7 @@ export class AppError extends Error {
    * @param {string} message   Human-readable message sent to the client
    * @param {number} statusCode HTTP status code (4xx client, 5xx server)
    */
-  constructor(message, statusCode) {
+  constructor (message, statusCode) {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = true; // distinguishes expected errors from bugs

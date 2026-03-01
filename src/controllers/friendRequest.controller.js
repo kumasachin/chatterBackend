@@ -89,7 +89,7 @@ export const acceptFriendRequest = async (req, res) => {
 
     const friendRequest = await FriendRequest.findById(requestId).populate(
       "sender receiver",
-      "name profile"
+      "name profile",
     );
 
     if (!friendRequest) {
@@ -213,7 +213,7 @@ export const getFriends = async (req, res) => {
 
     const user = await User.findById(userId).populate(
       "friends",
-      "name profile"
+      "name profile",
     );
 
     if (!user) {

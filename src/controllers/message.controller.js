@@ -152,7 +152,7 @@ export const sendMessage = async (req, res) => {
           // Generate AI response
           const aiResponse = await generateAIResponse(
             req.body.content,
-            conversationHistory
+            conversationHistory,
           );
 
           // Create AI response message

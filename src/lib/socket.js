@@ -27,7 +27,7 @@ logger.info({ origins: socketOrigins }, "Socket.io server initialised");
 // NOTE: Replace with Redis adapter when running multiple instances
 const userSocketMap = {};
 
-export function getReceiverSocketIds(userId) {
+export function getReceiverSocketIds (userId) {
   return userSocketMap[userId] ? Array.from(userSocketMap[userId]) : [];
 }
 

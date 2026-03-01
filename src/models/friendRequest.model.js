@@ -22,7 +22,7 @@ const friendRequestSchema = new mongoose.Schema(
       default: "",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Prevent duplicate friend requests

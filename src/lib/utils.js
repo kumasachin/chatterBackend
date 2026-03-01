@@ -14,9 +14,9 @@ export const generateToken = (userId, res) => {
 
   res.cookie("jwt", token, {
     maxAge: COOKIE_MAX_AGE,
-    httpOnly: true,                              // not accessible via JS
-    sameSite: IS_PROD ? "none" : "strict",       // cross-site in prod
-    secure: IS_PROD,                             // HTTPS-only in prod
+    httpOnly: true, // not accessible via JS
+    sameSite: IS_PROD ? "none" : "strict", // cross-site in prod
+    secure: IS_PROD, // HTTPS-only in prod
     path: "/",
   });
 

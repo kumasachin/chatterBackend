@@ -213,7 +213,7 @@ const getFallbackResponse = userMessage => {
 // Generate AI response using Google Gemini
 export const generateAIResponse = async (
   userMessage,
-  conversationHistory = []
+  conversationHistory = [],
 ) => {
   try {
     // Check if Gemini API key is available

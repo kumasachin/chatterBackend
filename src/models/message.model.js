@@ -20,7 +20,7 @@ const messageSchema = new mongoose.Schema(
       type: String, // Cloudinary CDN URL
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 // ── Indexes ────────────────────────────────────────────────────────────────
 // Primary query: fetch conversation between two users, newest first

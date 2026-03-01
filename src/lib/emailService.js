@@ -30,7 +30,7 @@ export const sendVerificationEmail = async (user) => {
     const verificationToken = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "24h" }
+      { expiresIn: "24h" },
     );
 
     const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
@@ -233,7 +233,7 @@ export const sendResetVerificationEmail = async (user) => {
     const verificationToken = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "1h" },
     );
 
     const resetUrl = `${process.env.FRONTEND_URL}/#/reset-password?token=${verificationToken}`;

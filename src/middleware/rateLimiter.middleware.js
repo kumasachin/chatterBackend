@@ -7,7 +7,7 @@ import rateLimit from "express-rate-limit";
 const createLimiter = (options) =>
   rateLimit({
     standardHeaders: true, // Return rate limit info in "RateLimit-*" headers
-    legacyHeaders: false,  // Disable "X-RateLimit-*" headers
+    legacyHeaders: false, // Disable "X-RateLimit-*" headers
     handler: (req, res) => {
       res.status(429).json({
         message: options.message || "Too many requests. Please try again later.",
