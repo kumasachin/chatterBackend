@@ -14,14 +14,21 @@ const messageSchema = new mongoose.Schema(
     },
     content: {
       type: String,
+      maxlength: [5000, "Message cannot exceed 5000 characters"],
     },
-    profile: {
-      type: String,
+    image: {
+      type: String, // Cloudinary CDN URL
     },
   },
   { timestamps: true }
 );
-
+// ── Indexes ────────────────────────────────────────────────────────────────
+// Primary query: fetch conversation between two users, newest first
+messageSchema.index({ senderId: 1, recipientId: 1, createdAt: -1 });
+// Reverse direction (recipient-initiated lookup)
+messageSchema.index({ recipientId: 1, senderId: 1, createdAt: -1 });
+// Inbox / unread counts
+messageSchema.index({ recipientId: 1, createdAt: -1 });
 const Message = mongoose.model("Message", messageSchema);
 
 export default Message;

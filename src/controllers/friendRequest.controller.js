@@ -2,6 +2,7 @@ import FriendRequest from "../models/friendRequest.model.js";
 import User from "../models/user.model.js";
 import { io } from "../lib/socket.js";
 import { censorMessage } from "../utils/messageCensorship.js";
+import { logger } from "../lib/logger.js";
 
 // handle sending friend requests
 export const sendFriendRequest = async (req, res) => {
@@ -200,7 +201,7 @@ export const getSentFriendRequests = async (req, res) => {
 
     res.status(200).json(friendRequests);
   } catch (error) {
-    console.log("Error in getSentFriendRequests controller", error.message);
+    logger.error({ err: error.message }, "getSentFriendRequests error");
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -221,7 +222,7 @@ export const getFriends = async (req, res) => {
 
     res.status(200).json(user.friends);
   } catch (error) {
-    console.log("Error in getFriends controller", error.message);
+    logger.error({ err: error.message }, "getFriends error");
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -245,7 +246,7 @@ export const removeFriend = async (req, res) => {
       message: "Friend removed successfully",
     });
   } catch (error) {
-    console.log("Error in removeFriend controller", error.message);
+    logger.error({ err: error.message }, "removeFriend error");
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -284,7 +285,7 @@ export const checkFriendshipStatus = async (req, res) => {
 
     res.status(200).json({ status: "none" });
   } catch (error) {
-    console.log("Error in checkFriendshipStatus controller", error.message);
+    logger.error({ err: error.message }, "checkFriendshipStatus error");
     res.status(500).json({ message: "Internal Server Error" });
   }
 };

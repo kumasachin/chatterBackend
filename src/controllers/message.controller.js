@@ -2,9 +2,9 @@ import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
 import { censorMessage } from "../utils/messageCensorship.js";
 import { generateAIResponse } from "./ai.controller.js";
-
 import cloudinary from "../lib/cloudinary.js";
 import { io, getReceiverSocketIds } from "../lib/socket.js";
+import { logger } from "../lib/logger.js";
 
 export const getUsersForSidebar = async (req, res) => {
   try {
@@ -164,17 +164,16 @@ export const sendMessage = async (req, res) => {
 
           await aiMessage.save();
 
-          // Emit AI response to the original sender
           const senderSocketIds = getReceiverSocketIds(senderId);
           if (senderSocketIds.length > 0) {
-            senderSocketIds.forEach(socketId => {
+            senderSocketIds.forEach((socketId) => {
               io.to(socketId).emit("newMessage", aiMessage);
             });
           }
 
-          console.log("🤖 AI response sent successfully");
+          logger.debug({ recipientId }, "AI response sent");
         } catch (error) {
-          console.error("Error sending AI response:", error);
+          logger.error({ err: error }, "Error sending AI response");
         }
       }, 1500); // 1.5 second delay to simulate typing
     }

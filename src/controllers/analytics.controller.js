@@ -3,6 +3,7 @@
 
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
+import { logger } from "../lib/logger.js";
 
 // Track user engagement metrics
 const trackUserActivity = async (req, res) => {
@@ -10,17 +11,11 @@ const trackUserActivity = async (req, res) => {
     const { action, metadata } = req.body;
     const userId = req.user._id;
 
-    // Log user activity for analytics
-    console.log(`User Activity: ${userId} performed ${action}`, {
-      timestamp: new Date().toISOString(),
-      userId,
-      action,
-      metadata,
-      userAgent: req.headers["user-agent"],
-      ip: req.ip,
-    });
+    logger.info(
+      { userId, action, metadata, ip: req.ip },
+      "User activity tracked",
+    );
 
-    // Update user's last activity
     await User.findByIdAndUpdate(userId, {
       lastActivity: new Date(),
       $inc: { activityCount: 1 },
@@ -31,7 +26,7 @@ const trackUserActivity = async (req, res) => {
       message: "Activity tracked successfully",
     });
   } catch (error) {
-    console.error("Error tracking user activity:", error);
+    logger.error({ err: error }, "Error tracking user activity");
     res.status(500).json({
       success: false,
       message: "Failed to track activity",
@@ -91,7 +86,7 @@ const getApplicationMetrics = async (req, res) => {
       data: metrics,
     });
   } catch (error) {
-    console.error("Error fetching application metrics:", error);
+    logger.error({ err: error }, "Error fetching application metrics");
     res.status(500).json({
       success: false,
       message: "Failed to fetch metrics",
@@ -102,22 +97,16 @@ const getApplicationMetrics = async (req, res) => {
 // Track system performance metrics
 const trackPerformanceMetrics = async (req, res) => {
   try {
-    const { timing, category, name, duration } = req.body;
+    const { category, name, duration } = req.body;
 
-    // Log performance metrics
-    console.log(`Performance Metric: ${category}/${name}`, {
-      timestamp: new Date().toISOString(),
-      category,
-      name,
-      duration: `${duration}ms`,
-      userId: req.user?._id,
-      userAgent: req.headers["user-agent"],
-      timing,
-    });
+    logger.info(
+      { category, name, duration, userId: req.user?._id },
+      "Performance metric tracked",
+    );
 
     // Alert on slow operations (>5 seconds)
     if (duration > 5000) {
-      console.warn(`🚨 Slow Operation Detected: ${name} took ${duration}ms`);
+      logger.warn({ name, duration }, "Slow operation detected");
     }
 
     res.status(200).json({
@@ -125,7 +114,7 @@ const trackPerformanceMetrics = async (req, res) => {
       message: "Performance metrics tracked",
     });
   } catch (error) {
-    console.error("Error tracking performance metrics:", error);
+    logger.error({ err: error }, "Error tracking performance metrics");
     res.status(500).json({
       success: false,
       message: "Failed to track performance metrics",
@@ -168,7 +157,7 @@ const getSystemHealth = async (req, res) => {
       data: healthCheck,
     });
   } catch (error) {
-    console.error("Error checking system health:", error);
+    logger.error({ err: error }, "Error checking system health");
     res.status(500).json({
       success: false,
       message: "Health check failed",

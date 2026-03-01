@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
+      unique: true, // enforce uniqueness at DB level (eliminates TOCTOU race)
     },
     fullName: {
       type: String,
@@ -77,8 +78,18 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
   },
-  { timestamps: true } // adds createdAt and updatedAt automatically
+  { timestamps: true }, // adds createdAt and updatedAt automatically
 );
+
+// ── Indexes ────────────────────────────────────────────────────────────────
+// Full-text search across username and display name
+userSchema.index({ name: "text", fullName: "text" });
+// Speed up /users?search= queries (case-insensitive prefix search)
+userSchema.index({ name: 1 });
+// Sort by newest users in admin views
+userSchema.index({ createdAt: -1 });
+// Look up guest users for cleanup jobs
+userSchema.index({ isGuest: 1, createdAt: 1 });
 
 const User = mongoose.model("User", userSchema);
 

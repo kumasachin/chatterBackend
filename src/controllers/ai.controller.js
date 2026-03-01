@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
 import bcrypt from "bcryptjs";
+import { logger } from "../lib/logger.js";
 
 // Initialize Google Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
@@ -40,14 +41,13 @@ export const sendWelcomeMessage = async userId => {
     // Get or create AI bot
     const aiBot = await createAIBot();
     if (!aiBot) {
-      console.error("Could not create AI bot for welcome message");
+      logger.error("Could not create AI bot for welcome message");
       return false;
     }
 
-    // Get user info for personalized welcome
     const user = await User.findById(userId);
     if (!user) {
-      console.error("User not found for welcome message");
+      logger.error({ userId }, "User not found for welcome message");
       return false;
     }
 
@@ -85,10 +85,10 @@ Ready to explore? What would you like to know first? 😊
     });
 
     await welcomeMessage.save();
-    console.log(`🤖 Welcome message sent to user ${user.name}`);
+    logger.info({ userId, userName: user.name }, "Welcome message sent");
     return true;
   } catch (error) {
-    console.error("Error sending welcome message:", error);
+    logger.error({ err: error }, "Error sending welcome message");
     return false;
   }
 };
@@ -113,14 +113,12 @@ export const createAIBot = async () => {
       });
 
       await aiBot.save();
-      console.log(
-        "🤖 AI Bot user created successfully with Gemini AI integration"
-      );
+      logger.info("AI Bot created with Gemini AI integration");
     }
 
     return aiBot;
   } catch (error) {
-    console.error("Error creating AI bot:", error);
+    logger.error({ err: error }, "Error creating AI bot");
     return null;
   }
 };
@@ -220,7 +218,7 @@ export const generateAIResponse = async (
   try {
     // Check if Gemini API key is available
     if (!process.env.GEMINI_API_KEY) {
-      console.log("No Gemini API key found, using fallback responses");
+      logger.debug("No Gemini API key, using fallback responses");
       return getFallbackResponse(userMessage);
     }
 
@@ -277,12 +275,10 @@ Response:`;
 
     const result = await model.generateContent(prompt);
     const response = result.response.text();
-
-    console.log("🤖 Gemini AI response generated successfully");
+    logger.debug("Gemini AI response generated");
     return response;
   } catch (error) {
-    console.error("Error with Gemini AI:", error.message);
-    console.log("Falling back to rule-based responses");
+    logger.warn({ err: error.message }, "Gemini AI error, falling back");
     return getFallbackResponse(userMessage);
   }
 };
@@ -316,7 +312,7 @@ export const sendAIMessage = async (req, res) => {
 
     res.status(201).json(newMessage);
   } catch (error) {
-    console.error("Error sending AI message:", error);
+    logger.error({ err: error }, "Error sending AI message");
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -324,9 +320,7 @@ export const sendAIMessage = async (req, res) => {
 // Get AI bot user info
 export const getAIBot = async (req, res) => {
   try {
-    const aiBot = await User.findOne({ name: "ChatterBot" }).select(
-      "-password"
-    );
+    const aiBot = await User.findOne({ name: "ChatterBot" }).select("-password");
 
     if (!aiBot) {
       return res.status(404).json({ message: "AI bot not found" });
@@ -334,14 +328,14 @@ export const getAIBot = async (req, res) => {
 
     res.status(200).json(aiBot);
   } catch (error) {
-    console.error("Error getting AI bot:", error);
+    logger.error({ err: error }, "Error getting AI bot");
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
 // Initialize AI bot on server start
 export const initializeAIBot = async () => {
-  console.log("🤖 Initializing ChatterBot with Google Gemini AI...");
+  logger.info("Initializing ChatterBot with Google Gemini AI");
   await createAIBot();
 };
 
@@ -352,36 +346,28 @@ export const autoAddAIBotFriend = async userId => {
     const aiBot = await User.findOne({ name: "ChatterBot" });
 
     if (!user || !aiBot) {
-      console.error("User or AI bot not found for auto-friend");
+      logger.warn({ userId }, "User or AI bot not found during auto-friend");
       return false;
     }
 
     // Check if they're already friends
     if (user.friends && user.friends.includes(aiBot._id)) {
-      console.log("User is already friends with ChatterBot");
+      logger.debug({ userId }, "User already friends with ChatterBot");
       return true;
     }
 
-    // Add AI bot to user's friends list
-    if (!user.friends) {
-      user.friends = [];
-    }
+    if (!user.friends) user.friends = [];
     user.friends.push(aiBot._id);
     await user.save();
 
-    // Add user to AI bot's friends list
-    if (!aiBot.friends) {
-      aiBot.friends = [];
-    }
+    if (!aiBot.friends) aiBot.friends = [];
     aiBot.friends.push(user._id);
     await aiBot.save();
 
-    console.log(
-      `🤖 AI Bot automatically added as friend for user: ${user.name}`
-    );
+    logger.info({ userId, userName: user.name }, "AI Bot auto-added as friend");
     return true;
   } catch (error) {
-    console.error("Error auto-adding AI bot as friend:", error);
+    logger.error({ err: error }, "Error auto-adding AI bot as friend");
     return false;
   }
 };

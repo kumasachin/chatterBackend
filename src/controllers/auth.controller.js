@@ -11,33 +11,23 @@ import {
   sendWelcomeEmail,
 } from "../lib/emailService.js";
 import { autoAddAIBotFriend, sendWelcomeMessage } from "./ai.controller.js";
+import { logger } from "../lib/logger.js";
 
-// signup handler - handles both required and optional fields
+// Module-level CAPTCHA store (replaces unsafe global.captchaStore)
+const captchaStore = new Map();
+
+// Purge expired CAPTCHAs to prevent unbounded memory growth
+const purgeExpiredCaptchas = () => {
+  const now = Date.now();
+  for (const [key, value] of captchaStore) {
+    if (value.expires < now) captchaStore.delete(key);
+  }
+};
 export const signup = async (req, res) => {
-  const {
-    name,
-    password,
-    profile,
-    fullName,
-    email,
-    gender,
-    dateOfBirth,
-    captchaCompleted,
-  } = req.body;
+  // req.body is pre-validated and stripped by Zod middleware (signupSchema)
+  const { name, password, profile, fullName, email, gender, dateOfBirth } =
+    req.body;
   try {
-    // basic validation first
-    if (!name || !password || !fullName || !email) {
-      return res
-        .status(400)
-        .json({ message: "Name, password, full name, and email are required" });
-    }
-
-    // Check if captcha was completed (frontend validation)
-    if (!captchaCompleted) {
-      return res
-        .status(400)
-        .json({ message: "Please complete the captcha verification" });
-    }
 
     // Enhanced name validation using third-party libraries
     const nameValidation = validateUserName(name);
@@ -57,16 +47,10 @@ export const signup = async (req, res) => {
         .json({ message: "Password must be at least 6 characters" });
     }
 
-    // check if username already taken
-    const existingUser = await User.findOne({ name });
-    if (existingUser) {
-      return res.status(400).json({ message: "name already exists" });
-    }
-
-    // check if email already taken
+    // Check if email already taken (username uniqueness is enforced by DB index)
     const existingEmail = await User.findOne({ email });
     if (existingEmail) {
-      return res.status(400).json({ message: "email already exists" });
+      return res.status(409).json({ message: "Email already in use" });
     }
 
     // Enhanced fullName validation - now required
@@ -104,8 +88,7 @@ export const signup = async (req, res) => {
       try {
         await sendVerificationEmail(newUser);
       } catch (emailError) {
-        console.error("Email verification failed:", emailError);
-        // Don't fail the registration if email fails
+        logger.warn({ err: emailError }, "Verification email failed to send");
       }
 
       generateToken(newUser._id, res);
@@ -126,6 +109,14 @@ export const signup = async (req, res) => {
       res.status(400).json({ message: "Invalid user data" });
     }
   } catch (error) {
+    // Duplicate username from DB unique index
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue || {})[0] || "field";
+      return res.status(409).json({
+        message: `${field.charAt(0).toUpperCase() + field.slice(1)} already in use`,
+      });
+    }
+    logger.error({ err: error }, "signup error");
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -162,8 +153,7 @@ export const login = async (req, res) => {
           sendWelcomeMessage(user._id);
         }, 2000); // Delay to ensure user is connected
       } catch (emailError) {
-        console.error("Welcome email failed:", emailError);
-        // Don't fail login if email fails
+        logger.warn({ err: emailError }, "Welcome email failed to send");
       }
     } else {
       // Update last login time for returning users
@@ -180,7 +170,7 @@ export const login = async (req, res) => {
       isFirstLogin,
     });
   } catch (error) {
-    console.error("Login error:", error);
+    logger.error({ err: error }, "Login error");
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
@@ -237,16 +227,14 @@ export const guestLogin = async (req, res) => {
       isGuest: true,
     });
   } catch (error) {
-    console.error("Guest login error:", error);
+    logger.error({ err: error }, "Guest login error");
 
-    // Provide more specific error messages
     if (error.name === "MongooseError" || error.name === "MongoError") {
       return res.status(503).json({
         message: "Database connection error. Please try again later.",
       });
     }
 
-    // Duplicate key (e.g. email collision) — retry is safe, surface it clearly
     if (error.code === 11000) {
       return res.status(409).json({
         message: "Could not create guest session. Please try again.",
@@ -406,15 +394,14 @@ export const forgotPassword = async (req, res) => {
     try {
       await sendResetVerificationEmail(user);
     } catch (emailError) {
-      console.error("Password reset failed:", emailError);
-      // Don't fail the registration if email fails
+      logger.warn({ err: emailError }, "Password reset email failed to send");
     }
 
     res.status(200).json({
       message: "Password reset link has been sent to your email address",
     });
   } catch (error) {
-    console.error("Forgot password error:", error);
+    logger.error({ err: error }, "Forgot password error");
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -473,7 +460,7 @@ export const resetPassword = async (req, res) => {
 
     res.status(200).json({ message: "Password has been reset successfully" });
   } catch (error) {
-    console.error("Reset password error:", error);
+    logger.error({ err: error }, "Reset password error");
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -509,7 +496,7 @@ export const resendVerificationEmail = async (req, res) => {
       message: "Verification email has been sent successfully",
     });
   } catch (error) {
-    console.error("Resend verification email error:", error);
+    logger.error({ err: error }, "Resend verification email error");
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -530,19 +517,14 @@ export const generateCaptcha = (req, res) => {
     const sessionId =
       Date.now().toString() + Math.random().toString(36).substr(2, 9);
 
-    // Store CAPTCHA in global memory (in production, use Redis or database)
-    global.captchaStore = global.captchaStore || new Map();
-    global.captchaStore.set(sessionId, {
+    // Store CAPTCHA in module-level Map (thread-safe, no global pollution)
+    captchaStore.set(sessionId, {
       text: captchaText,
       expires: Date.now() + 300000, // 5 minutes
     });
 
-    // Clean up expired CAPTCHAs
-    for (const [key, value] of global.captchaStore.entries()) {
-      if (value.expires < Date.now()) {
-        global.captchaStore.delete(key);
-      }
-    }
+    // Purge stale entries periodically
+    purgeExpiredCaptchas();
 
     // For now, return a simple SVG-based CAPTCHA
     const svgCaptcha = `
@@ -561,7 +543,7 @@ export const generateCaptcha = (req, res) => {
       captchaImage: base64Image,
     });
   } catch (error) {
-    console.error("CAPTCHA generation error:", error);
+    logger.error({ err: error }, "CAPTCHA generation error");
     res.status(500).json({ message: "Failed to generate CAPTCHA" });
   }
 };
