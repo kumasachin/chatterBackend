@@ -8,6 +8,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import helmet from "helmet";
+import mongoose from "mongoose";
 
 import { LocalPath } from "./config.js";
 import { connectDB } from "./lib/db.js";
@@ -26,7 +27,7 @@ import { initializeAIBot } from "./controllers/ai.controller.js";
 // ── Allowed CORS origins ─────────────────────────────────────────────────────
 // Production origins come from env vars; dev origins are hardcoded (not sensitive)
 const extraOrigins = process.env.EXTRA_ALLOWED_ORIGINS
-  ? process.env.EXTRA_ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+  ? process.env.EXTRA_ALLOWED_ORIGINS.split(",").map(o => o.trim())
   : [];
 
 const allowedOrigins = [
@@ -44,7 +45,7 @@ app.use(
   helmet({
     // Allow inline styles/scripts in development for convenience
     contentSecurityPolicy: process.env.NODE_ENV === "production",
-  }),
+  })
 );
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
@@ -54,7 +55,7 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  }),
+  })
 );
 
 // General rate limiter on all API routes
@@ -67,11 +68,13 @@ app.use("/api/friend-requests", friendRequestRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
-// Health check — also reports DB state
+// Health check — reports DB state
 app.get("/health", (req, res) => {
+  const dbState = ["disconnected", "connected", "connecting", "disconnecting"];
   res.json({
     status: "OK",
     timestamp: new Date().toISOString(),
+    db: dbState[mongoose.connection.readyState] || "unknown",
     routes: ["auth", "messages", "friend-requests", "ai", "analytics"],
   });
 });
@@ -83,7 +86,7 @@ if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../chatterFrontend/dist")));
   app.get("*", (_req, res) => {
     res.sendFile(
-      path.join(__dirname, "../chatterFrontend", "dist", "index.html"),
+      path.join(__dirname, "../chatterFrontend", "dist", "index.html")
     );
   });
 }
