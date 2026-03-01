@@ -1,2 +1,19 @@
-# Run lint-staged for code quality checks
+# ── 1. Lint & format staged files (ESLint + Prettier) ────────────────────────
 npx lint-staged
+
+# ── 2. Jest unit tests for staged source files ────────────────────────────────
+# Uses --findRelatedTests so only tests that import the changed files are run.
+# --bail=1     stop immediately on first failure (fast feedback)
+# --forceExit  don't hang waiting for open handles
+# --passWithNoTests  succeed quietly when no related tests exist
+STAGED_JS=$(git diff --cached --name-only --diff-filter=ACM | grep -E 'src/.*\.js$' | tr '\n' ' ')
+if [ -n "$STAGED_JS" ]; then
+  echo "▶ Running related Jest tests..."
+  # shellcheck disable=SC2086
+  node --experimental-vm-modules node_modules/.bin/jest \
+    --findRelatedTests \
+    --passWithNoTests \
+    --bail=1 \
+    --forceExit \
+    $STAGED_JS
+fi

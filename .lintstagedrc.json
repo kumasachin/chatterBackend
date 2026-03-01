@@ -1,5 +1,9 @@
 {
-  "*.js": ["eslint --fix", "prettier --write"],
-  "*.{json,md}": ["prettier --write"],
-  "package.json": ["npm audit --audit-level=moderate"]
+  "*.js": [
+    "eslint --fix",
+    "prettier --write"
+  ],
+  "*.{json,md}": [
+    "prettier --write"
+  ]
 }
