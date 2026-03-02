@@ -2,29 +2,31 @@ import rateLimit from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
 import Redis from "ioredis";
 import { logger } from "../lib/logger.js";
+import { REDIS_ENABLED } from "../lib/redis.js";
 
 // ── Dedicated fast-fail Redis client for rate limiting ────────────────────────
-// Uses maxRetriesPerRequest: 0 so store operations fail immediately when Redis
-// is unavailable (instead of blocking forever with the BullMQ-style null retries).
-// Falls back to in-memory limiting if Redis is down (fine for single-instance dev).
+// Only created when REDIS_URL is configured. Each limiter gets its own
+// RedisStore with a unique prefix (express-rate-limit v7 forbids sharing one).
+// Falls back to in-memory per-instance limiting when Redis is unavailable.
 let rlRedis = null;
-try {
-  const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
-  rlRedis = new Redis(REDIS_URL, {
-    maxRetriesPerRequest: 0,
-    enableReadyCheck: false,
-    lazyConnect: true,
-    connectTimeout: 2000,
-  });
-  rlRedis.on("error", () => {
-    // suppress per-event noise; rate limiter degrades to in-memory silently
-  });
-  await rlRedis.connect().catch(() => {
-    rlRedis = null; // Redis unavailable — use in-memory fallback
-    logger.warn("Redis unavailable — rate limiters will use in-memory store");
-  });
-} catch {
-  rlRedis = null;
+if (REDIS_ENABLED) {
+  try {
+    rlRedis = new Redis(process.env.REDIS_URL, {
+      maxRetriesPerRequest: 0,
+      enableReadyCheck: false,
+      lazyConnect: true,
+      connectTimeout: 2000,
+    });
+    rlRedis.on("error", () => {
+      // suppress per-event noise; degrades to in-memory silently
+    });
+    await rlRedis.connect().catch(() => {
+      rlRedis = null;
+      logger.warn("Redis unavailable — rate limiters will use in-memory store");
+    });
+  } catch {
+    rlRedis = null;
+  }
 }
 
 // ── Per-limiter Redis store factory ──────────────────────────────────────────

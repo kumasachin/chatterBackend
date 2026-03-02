@@ -24,10 +24,13 @@ const io = new Server(server, {
 });
 
 // ── Redis adapter for multi-instance Socket.io ────────────────────────────────
-// Connects both pub/sub ioredis clients then attaches the adapter.
-// Falls back gracefully: if Redis is unreachable the adapter init logs a warning
-// and Socket.io continues with the default in-memory adapter (single-instance).
+// Only attempted when REDIS_URL is configured. Falls back to in-memory adapter
+// (single-instance mode) when Redis is not available.
 (async () => {
+  if (!redisPub || !redisSub) {
+    logger.info("Socket.io using in-memory adapter (no REDIS_URL)");
+    return;
+  }
   try {
     await Promise.all([redisPub.connect(), redisSub.connect()]);
     io.adapter(createAdapter(redisPub, redisSub));
@@ -35,7 +38,7 @@ const io = new Server(server, {
   } catch (err) {
     logger.warn(
       { err },
-      "Socket.io Redis adapter unavailable — using in-memory adapter",
+      "Socket.io Redis adapter unavailable — using in-memory adapter"
     );
   }
 })();
@@ -46,7 +49,7 @@ logger.info({ origins: socketOrigins }, "Socket.io server initialised");
 // NOTE: Replace with Redis adapter when running multiple instances
 const userSocketMap = {};
 
-export function getReceiverSocketIds (userId) {
+export function getReceiverSocketIds(userId) {
   return userSocketMap[userId] ? Array.from(userSocketMap[userId]) : [];
 }
 
