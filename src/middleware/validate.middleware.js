@@ -10,11 +10,11 @@
  * On failure: returns 400 with an array of field errors.
  * On success: attaches parsed (coerced + stripped) data to req.body.
  */
-export const validateBody = (schema) => (req, res, next) => {
+export const validateBody = schema => (req, res, next) => {
   const result = schema.safeParse(req.body);
 
   if (!result.success) {
-    const errors = result.error.errors.map((e) => ({
+    const errors = result.error.issues.map(e => ({
       field: e.path.join("."),
       message: e.message,
     }));
