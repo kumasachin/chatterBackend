@@ -43,18 +43,18 @@ router.post(
   "/resend-verification",
   passwordResetLimiter,
   validateBody(resendVerificationSchema),
-  resendVerificationEmail
+  resendVerificationEmail,
 );
 router.post(
   "/forgot-password",
   passwordResetLimiter,
   validateBody(forgotPasswordSchema),
-  forgotPassword
+  forgotPassword,
 );
 router.post(
   "/reset-password",
   validateBody(resetPasswordSchema),
-  resetPassword
+  resetPassword,
 );
 
 // ── Protected routes ──────────────────────────────────────────────────────────
@@ -63,7 +63,7 @@ router.put(
   "/update-info",
   protectRoute,
   validateBody(updateUserInfoSchema),
-  updateUserInfo
+  updateUserInfo,
 );
 router.get("/check", protectRoute, checkAuth);
 router.get("/captcha", generateCaptcha);

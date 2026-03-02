@@ -267,7 +267,7 @@ export const updateProfile = async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { profile: uploadResponse.secure_url },
-      { new: true }
+      { new: true },
     );
 
     res.status(200).json(updatedUser);
@@ -373,7 +373,7 @@ export const forgotPassword = async (req, res) => {
     const resetToken = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "1h" },
     );
 
     // Save reset token to user (optional - for additional security)
@@ -501,7 +501,7 @@ export const generateCaptcha = async (req, res) => {
     let captchaText = "";
     for (let i = 0; i < 5; i++) {
       captchaText += characters.charAt(
-        Math.floor(Math.random() * characters.length)
+        Math.floor(Math.random() * characters.length),
       );
     }
 
@@ -521,7 +521,7 @@ export const generateCaptcha = async (req, res) => {
     `;
 
     const base64Image = `data:image/svg+xml;base64,${Buffer.from(
-      svgCaptcha
+      svgCaptcha,
     ).toString("base64")}`;
 
     res.status(200).json({

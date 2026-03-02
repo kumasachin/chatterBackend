@@ -78,7 +78,7 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
   },
-  { timestamps: true } // adds createdAt and updatedAt automatically
+  { timestamps: true }, // adds createdAt and updatedAt automatically
 );
 
 // ── Indexes ────────────────────────────────────────────────────────────────

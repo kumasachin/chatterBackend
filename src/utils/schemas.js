@@ -12,7 +12,7 @@ export const signupSchema = z.object({
     .max(30, "Username must be at most 30 characters")
     .regex(
       /^[a-zA-Z0-9_]+$/,
-      "Username can only contain letters, numbers, and underscores"
+      "Username can only contain letters, numbers, and underscores",
     ),
   password: z
     .string()
@@ -70,7 +70,7 @@ export const sendMessageSchema = z
   })
   .refine(
     data => data.content || data.image,
-    "Message must have content or an image"
+    "Message must have content or an image",
   );
 
 // ── Post schemas ──────────────────────────────────────────────────────────────
@@ -92,7 +92,7 @@ export const createPostSchema = z
     data =>
       (data.content && data.content.trim().length > 0) ||
       (data.images && data.images.length > 0),
-    "Post must have content or at least one image"
+    "Post must have content or at least one image",
   );
 
 export const addCommentSchema = z.object({

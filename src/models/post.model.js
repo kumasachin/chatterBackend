@@ -36,7 +36,7 @@ const postSchema = new mongoose.Schema(
       default: "friends",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // ── Indexes ───────────────────────────────────────────────────────────────────

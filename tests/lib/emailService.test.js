@@ -159,33 +159,21 @@ describe("Email Service - Welcome Email", () => {
       expect(emailHtml).toContain("mailto:sachin@chatter.dev");
     });
 
-    it("should log success message when email is sent", async () => {
-      const consoleSpy = jest.spyOn(console, "log").mockImplementation();
+    it("should return true when email is sent successfully", async () => {
       mockSendMail.mockResolvedValue({ messageId: "test-id" });
 
-      await sendWelcomeEmail(mockUser);
+      const result = await sendWelcomeEmail(mockUser);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Welcome email sent successfully to:",
-        mockUser.email
-      );
-
-      consoleSpy.mockRestore();
+      expect(result).toBe(true);
     });
 
-    it("should log error message when email fails", async () => {
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+    it("should return false when email sending fails", async () => {
       const error = new Error("SMTP Connection Failed");
       mockSendMail.mockRejectedValue(error);
 
-      await sendWelcomeEmail(mockUser);
+      const result = await sendWelcomeEmail(mockUser);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Welcome email send failed:",
-        error.message
-      );
-
-      consoleSpy.mockRestore();
+      expect(result).toBe(false);
     });
 
     it("should handle different environment configurations", async () => {

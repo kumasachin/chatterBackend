@@ -28,7 +28,7 @@ export const connectDB = async () => {
     } catch (error) {
       logger.warn(
         { attempt, delayMs, err: error.message },
-        "MongoDB connection attempt failed — will retry"
+        "MongoDB connection attempt failed — will retry",
       );
       await sleep(delayMs);
       // Exponential backoff capped at 60s

@@ -48,7 +48,7 @@ app.use(
   helmet({
     // Allow inline styles/scripts in development for convenience
     contentSecurityPolicy: process.env.NODE_ENV === "production",
-  })
+  }),
 );
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
@@ -58,7 +58,7 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  })
+  }),
 );
 
 // General rate limiter on all API routes
@@ -101,7 +101,7 @@ if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../chatterFrontend/dist")));
   app.get("*", (_req, res) => {
     res.sendFile(
-      path.join(__dirname, "../chatterFrontend", "dist", "index.html")
+      path.join(__dirname, "../chatterFrontend", "dist", "index.html"),
     );
   });
 }

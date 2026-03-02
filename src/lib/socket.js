@@ -35,7 +35,7 @@ const io = new Server(server, {
   } catch (err) {
     logger.warn(
       { err },
-      "Socket.io Redis adapter unavailable — using in-memory adapter"
+      "Socket.io Redis adapter unavailable — using in-memory adapter",
     );
   }
 })();
@@ -46,7 +46,7 @@ logger.info({ origins: socketOrigins }, "Socket.io server initialised");
 // NOTE: Replace with Redis adapter when running multiple instances
 const userSocketMap = {};
 
-export function getReceiverSocketIds(userId) {
+export function getReceiverSocketIds (userId) {
   return userSocketMap[userId] ? Array.from(userSocketMap[userId]) : [];
 }
 
