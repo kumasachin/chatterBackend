@@ -61,6 +61,17 @@ app.use(
 // General rate limiter on all API routes
 app.use("/api/", apiLimiter);
 
+// DB guard — return 503 if MongoDB is not yet connected
+app.use("/api/", (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      message:
+        "Service temporarily unavailable. Database is connecting, please retry in a few seconds.",
+    });
+  }
+  next();
+});
+
 // ── Routes ───────────────────────────────────────────────────────────────────
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
@@ -95,18 +106,18 @@ if (process.env.NODE_ENV === "production") {
 app.use(errorHandler);
 
 // ── Bootstrap ────────────────────────────────────────────────────────────────
-const startServer = async () => {
-  try {
-    await connectDB();
-    await initializeAIBot();
+// Start HTTP server FIRST so Render detects the open port immediately.
+// MongoDB connection runs in the background with infinite retries.
+// API routes return 503 while the DB is still connecting.
+server.listen(PORT, () => {
+  logger.info({ port: PORT, env: process.env.NODE_ENV }, "Server started");
+});
 
-    server.listen(PORT, () => {
-      logger.info({ port: PORT, env: process.env.NODE_ENV }, "Server started");
-    });
-  } catch (error) {
-    logger.error({ err: error }, "Failed to start server");
+// Connect to DB and initialise AI bot asynchronously
+connectDB()
+  .then(() => initializeAIBot())
+  .catch(err => {
+    // connectDB retries forever so this only fires for config errors
+    logger.error({ err }, "Fatal: could not connect to MongoDB");
     process.exit(1);
-  }
-};
-
-startServer();
+  });

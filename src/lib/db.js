@@ -1,41 +1,38 @@
 import mongoose from "mongoose";
 import { logger } from "./logger.js";
 
-const MAX_RETRIES = 5;
-const RETRY_DELAY_MS = 5000;
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
+/**
+ * Connect with infinite exponential-backoff retries.
+ * Caps at 60s between attempts so we don't spam Atlas.
+ * The server starts BEFORE this resolves — DB is optional at boot.
+ */
 export const connectDB = async () => {
   if (!process.env.MONGODB_URI) {
     throw new Error("MONGODB_URI environment variable is not defined");
   }
 
-  let lastError;
+  let attempt = 0;
+  let delayMs = 5000;
 
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+  while (true) {
+    attempt++;
     try {
       const conn = await mongoose.connect(process.env.MONGODB_URI, {
         serverSelectionTimeoutMS: 10000,
         connectTimeoutMS: 10000,
       });
-
       logger.info({ host: conn.connection.host }, "MongoDB connected");
       return conn;
     } catch (error) {
-      lastError = error;
       logger.warn(
-        { attempt, maxRetries: MAX_RETRIES, err: error.message },
-        "MongoDB connection attempt failed",
+        { attempt, delayMs, err: error.message },
+        "MongoDB connection attempt failed — will retry"
       );
-
-      if (attempt < MAX_RETRIES) {
-        logger.info(`Retrying in ${RETRY_DELAY_MS / 1000}s...`);
-        await sleep(RETRY_DELAY_MS);
-      }
+      await sleep(delayMs);
+      // Exponential backoff capped at 60s
+      delayMs = Math.min(delayMs * 2, 60_000);
     }
   }
-
-  logger.error("All MongoDB connection attempts failed");
-  throw lastError;
 };
