@@ -11,6 +11,8 @@ import {
   resetPassword,
   resendVerificationEmail,
   guestLogin,
+  generateCaptcha,
+  verifyCaptcha,
 } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import { validateBody } from "../middleware/validate.middleware.js";
@@ -41,18 +43,18 @@ router.post(
   "/resend-verification",
   passwordResetLimiter,
   validateBody(resendVerificationSchema),
-  resendVerificationEmail,
+  resendVerificationEmail
 );
 router.post(
   "/forgot-password",
   passwordResetLimiter,
   validateBody(forgotPasswordSchema),
-  forgotPassword,
+  forgotPassword
 );
 router.post(
   "/reset-password",
   validateBody(resetPasswordSchema),
-  resetPassword,
+  resetPassword
 );
 
 // ── Protected routes ──────────────────────────────────────────────────────────
@@ -61,8 +63,10 @@ router.put(
   "/update-info",
   protectRoute,
   validateBody(updateUserInfoSchema),
-  updateUserInfo,
+  updateUserInfo
 );
 router.get("/check", protectRoute, checkAuth);
+router.get("/captcha", generateCaptcha);
+router.post("/captcha/verify", verifyCaptcha);
 
 export default router;

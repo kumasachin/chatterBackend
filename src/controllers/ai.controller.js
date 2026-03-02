@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
-import bcrypt from "bcryptjs";
+import argon2 from "argon2";
 import { logger } from "../lib/logger.js";
 
 // Initialize Google Gemini AI
@@ -106,7 +106,7 @@ export const createAIBot = async () => {
         fullName:
           "ChatterBot - Chatter AI Assistant (Powered by Google Gemini)",
         email: "chatterbot@chatter.local",
-        password: await bcrypt.hash("aibot123", 10),
+        password: await argon2.hash("aibot123"),
         profile: "/avatar-demo.html",
         isGuest: false,
         isAIBot: true,
@@ -213,7 +213,7 @@ const getFallbackResponse = userMessage => {
 // Generate AI response using Google Gemini
 export const generateAIResponse = async (
   userMessage,
-  conversationHistory = [],
+  conversationHistory = []
 ) => {
   try {
     // Check if Gemini API key is available
@@ -251,7 +251,7 @@ export const generateAIResponse = async (
 - Frontend: React 19, TypeScript, Vite, Tailwind CSS, Zustand
 - Backend: Node.js, Express, MongoDB, Socket.IO
 - AI: Google Gemini integration
-- Security: JWT authentication, bcrypt, content filtering
+- Security: JWT authentication, argon2, content filtering
 
 **What makes it interesting:**
 - Modern, responsive design that works great on all devices
@@ -320,7 +320,9 @@ export const sendAIMessage = async (req, res) => {
 // Get AI bot user info
 export const getAIBot = async (req, res) => {
   try {
-    const aiBot = await User.findOne({ name: "ChatterBot" }).select("-password");
+    const aiBot = await User.findOne({ name: "ChatterBot" }).select(
+      "-password"
+    );
 
     if (!aiBot) {
       return res.status(404).json({ message: "AI bot not found" });

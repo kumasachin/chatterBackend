@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  # ── Redis ────────────────────────────────────────────────────────────────────
+  # Used for:  Socket.io multi-instance pub/sub, BullMQ job queue,
+  #            rate-limit state, captcha session cache
+  redis:
+    image: redis:7-alpine
+    container_name: chatter-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  redis_data:

@@ -1,8 +1,10 @@
 import { Server } from "socket.io";
+import { createAdapter } from "@socket.io/redis-adapter";
 import http from "http";
 import express from "express";
 import { LocalPath } from "../config.js";
 import { logger } from "./logger.js";
+import { redisPub, redisSub } from "./redis.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -21,23 +23,41 @@ const io = new Server(server, {
   },
 });
 
+// ── Redis adapter for multi-instance Socket.io ────────────────────────────────
+// Connects both pub/sub ioredis clients then attaches the adapter.
+// Falls back gracefully: if Redis is unreachable the adapter init logs a warning
+// and Socket.io continues with the default in-memory adapter (single-instance).
+(async () => {
+  try {
+    await Promise.all([redisPub.connect(), redisSub.connect()]);
+    io.adapter(createAdapter(redisPub, redisSub));
+    logger.info("Socket.io Redis adapter attached");
+  } catch (err) {
+    logger.warn(
+      { err },
+      "Socket.io Redis adapter unavailable — using in-memory adapter"
+    );
+  }
+})();
+
 logger.info({ origins: socketOrigins }, "Socket.io server initialised");
 
 // In-memory map: userId → Set<socketId>
 // NOTE: Replace with Redis adapter when running multiple instances
 const userSocketMap = {};
 
-export function getReceiverSocketIds (userId) {
+export function getReceiverSocketIds(userId) {
   return userSocketMap[userId] ? Array.from(userSocketMap[userId]) : [];
 }
 
-io.on("connection", (socket) => {
-  const userId =
-    socket.handshake.query.userId || socket.handshake.auth.userId;
+io.on("connection", socket => {
+  const userId = socket.handshake.query.userId || socket.handshake.auth.userId;
 
   if (userId) {
     if (!userSocketMap[userId]) userSocketMap[userId] = new Set();
     userSocketMap[userId].add(socket.id);
+    // Join personal room so controllers can emit to `user:{userId}` across instances
+    socket.join(`user:${userId}`);
     logger.debug({ userId, socketId: socket.id }, "Socket connected");
   }
 

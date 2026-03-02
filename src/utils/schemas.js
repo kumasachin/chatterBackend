@@ -12,7 +12,7 @@ export const signupSchema = z.object({
     .max(30, "Username must be at most 30 characters")
     .regex(
       /^[a-zA-Z0-9_]+$/,
-      "Username can only contain letters, numbers, and underscores",
+      "Username can only contain letters, numbers, and underscores"
     ),
   password: z
     .string()
@@ -25,7 +25,7 @@ export const signupSchema = z.object({
   email: z.string().email("Please provide a valid email address"),
   captchaCompleted: z
     .boolean()
-    .refine((v) => v === true, "Captcha verification is required"),
+    .refine(v => v === true, "Captcha verification is required"),
   gender: z.enum(["male", "female", "other"]).optional().nullable(),
   dateOfBirth: z.string().optional().nullable(),
   profile: z.string().optional().nullable(),
@@ -63,10 +63,39 @@ export const updateUserInfoSchema = z.object({
   dateOfBirth: z.string().optional().nullable(),
 });
 
-export const sendMessageSchema = z.object({
-  content: z.string().max(5000, "Message is too long").optional(),
-  image: z.string().optional(),
-}).refine(
-  (data) => data.content || data.image,
-  "Message must have content or an image",
-);
+export const sendMessageSchema = z
+  .object({
+    content: z.string().max(5000, "Message is too long").optional(),
+    image: z.string().optional(),
+  })
+  .refine(
+    data => data.content || data.image,
+    "Message must have content or an image"
+  );
+
+// ── Post schemas ──────────────────────────────────────────────────────────────
+export const createPostSchema = z
+  .object({
+    content: z
+      .string()
+      .max(2000, "Post content is too long")
+      .optional()
+      .default(""),
+    images: z
+      .array(z.string())
+      .max(4, "Max 4 images per post")
+      .optional()
+      .default([]),
+    visibility: z.enum(["public", "friends"]).optional().default("friends"),
+  })
+  .refine(
+    data =>
+      (data.content && data.content.trim().length > 0) ||
+      (data.images && data.images.length > 0),
+    "Post must have content or at least one image"
+  );
+
+export const addCommentSchema = z.object({
+  content: z.string().min(1).max(1000, "Comment is too long").trim(),
+  parentComment: z.string().optional().nullable(),
+});

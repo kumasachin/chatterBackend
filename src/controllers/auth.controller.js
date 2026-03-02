@@ -1,6 +1,6 @@
 import { generateToken } from "../lib/utils.js";
 import User from "../models/user.model.js";
-import bcrypt from "bcryptjs";
+import argon2 from "argon2";
 import cloudinary from "../lib/cloudinary.js";
 import { validateUserName } from "../utils/messageCensorship.js";
 import jwt from "jsonwebtoken";
@@ -12,17 +12,9 @@ import {
 } from "../lib/emailService.js";
 import { autoAddAIBotFriend, sendWelcomeMessage } from "./ai.controller.js";
 import { logger } from "../lib/logger.js";
+import { cacheSet, cacheGet, cacheDel } from "../lib/redis.js";
 
-// Module-level CAPTCHA store (replaces unsafe global.captchaStore)
-const captchaStore = new Map();
-
-// Purge expired CAPTCHAs to prevent unbounded memory growth
-const purgeExpiredCaptchas = () => {
-  const now = Date.now();
-  for (const [key, value] of captchaStore) {
-    if (value.expires < now) captchaStore.delete(key);
-  }
-};
+const CAPTCHA_TTL = 300; // 5 minutes in seconds
 export const signup = async (req, res) => {
   // req.body is pre-validated and stripped by Zod middleware (signupSchema)
   const { name, password, profile, fullName, email, gender, dateOfBirth } =
@@ -65,8 +57,7 @@ export const signup = async (req, res) => {
     }
 
     // hash the password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await argon2.hash(password);
 
     // create new user with optional fields
     const newUser = new User({
@@ -128,7 +119,7 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    const isPasswordCorrect = await argon2.verify(user.password, password);
 
     if (!isPasswordCorrect) {
       return res.status(400).json({ message: "Invalid credentials" });
@@ -195,7 +186,7 @@ export const guestLogin = async (req, res) => {
       name: guestUsername,
       fullName: `Guest User ${guestNumber}`,
       email: `guest_${uniqueId}@chatter.local`,
-      password: await bcrypt.hash("guest123", 10), // Simple password for guests
+      password: await argon2.hash("guest123"), // Simple password for guests
       profile: "/avatar-demo.html", // Default guest avatar
       isGuest: true, // Mark as guest user
     });
@@ -451,8 +442,7 @@ export const resetPassword = async (req, res) => {
     }
 
     // Hash new password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await argon2.hash(password);
 
     // Update password and clear reset token
     user.password = hashedPassword;
@@ -503,7 +493,7 @@ export const resendVerificationEmail = async (req, res) => {
   }
 };
 
-export const generateCaptcha = (req, res) => {
+export const generateCaptcha = async (req, res) => {
   try {
     // Generate simple text CAPTCHA
     const characters =
@@ -519,14 +509,8 @@ export const generateCaptcha = (req, res) => {
     const sessionId =
       Date.now().toString() + Math.random().toString(36).substr(2, 9);
 
-    // Store CAPTCHA in module-level Map (thread-safe, no global pollution)
-    captchaStore.set(sessionId, {
-      text: captchaText,
-      expires: Date.now() + 300000, // 5 minutes
-    });
-
-    // Purge stale entries periodically
-    purgeExpiredCaptchas();
+    // Store CAPTCHA in Redis with 5-minute TTL (survives restarts, works multi-instance)
+    await cacheSet(`captcha:${sessionId}`, { text: captchaText }, CAPTCHA_TTL);
 
     // For now, return a simple SVG-based CAPTCHA
     const svgCaptcha = `
@@ -548,4 +532,18 @@ export const generateCaptcha = (req, res) => {
     logger.error({ err: error }, "CAPTCHA generation error");
     res.status(500).json({ message: "Failed to generate CAPTCHA" });
   }
+};
+
+export const verifyCaptcha = async (req, res) => {
+  const { sessionId, answer } = req.body;
+  if (!sessionId || !answer) {
+    return res.status(400).json({ message: "sessionId and answer required" });
+  }
+  const stored = await cacheGet(`captcha:${sessionId}`);
+  if (!stored) {
+    return res.status(400).json({ message: "CAPTCHA expired or invalid" });
+  }
+  const correct = stored.text.toLowerCase() === answer.toLowerCase();
+  if (correct) await cacheDel(`captcha:${sessionId}`);
+  res.json({ correct });
 };

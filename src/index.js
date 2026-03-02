@@ -22,7 +22,10 @@ import messageRoutes from "./routes/message.route.js";
 import friendRequestRoutes from "./routes/friendRequest.route.js";
 import aiRoutes from "./routes/ai.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
+import postRoutes from "./routes/post.route.js";
 import { initializeAIBot } from "./controllers/ai.controller.js";
+// Initialise BullMQ workers (side-effect import — registers email + media workers)
+import "./lib/queue.js";
 
 // ── Allowed CORS origins ─────────────────────────────────────────────────────
 // Production origins come from env vars; dev origins are hardcoded (not sensitive)
@@ -78,6 +81,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/friend-requests", friendRequestRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/posts", postRoutes);
 
 // Health check — reports DB state
 app.get("/health", (req, res) => {
@@ -86,7 +90,7 @@ app.get("/health", (req, res) => {
     status: "OK",
     timestamp: new Date().toISOString(),
     db: dbState[mongoose.connection.readyState] || "unknown",
-    routes: ["auth", "messages", "friend-requests", "ai", "analytics"],
+    routes: ["auth", "messages", "friend-requests", "ai", "analytics", "posts"],
   });
 });
 
