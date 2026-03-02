@@ -28,11 +28,11 @@ const FALLBACK_RESPONSES = [
 ];
 
 const GREETING_RESPONSES = [
-  "Hey there! 🚀 Welcome to Chatter - the most amazing messaging app created by Sachin Kumar! I'm ChatterBot, your AI companion powered by Google Gemini. Ready to explore this incredible platform?",
-  "Hello! 🔥 You're now experiencing Chatter - a cutting-edge messaging platform with real-time features, AI integration, and beautiful design! I'm ChatterBot, here to make your journey awesome!",
-  "Hi! Welcome to the coolest messaging app ever! 🎯 Chatter combines modern tech like React, Node.js, and AI (that's me!) into one amazing experience. What would you like to discover first?",
-  "Hello and welcome to Chatter! 🌟 Created by the brilliant Sachin Kumar, this platform is packed with incredible features. I'm ChatterBot, your AI buddy, ready for an exciting conversation!",
-  "Hey! You've just entered Chatter - where modern technology meets amazing user experience! 🚀 Built with React, TypeScript, and powered by Google Gemini AI. I'm thrilled to chat with you!",
+  "Hey there! 🚀 Welcome to Chatter - the messaging app created by Sachin Kumar! I'm ChatterBot, your AI companion powered by Google Gemini. A quick tour is launching to show you around - enjoy the ride!",
+  "Hello! 🔥 You're now experiencing Chatter - real-time messaging, AI chat, friend system, and so much more! I'm ChatterBot. Your guided tour is about to start - it only takes 30 seconds!",
+  "Hi! Welcome to the coolest messaging app! 🎯 Chatter has React, Node.js, Socket.IO, and AI (that's me!) all in one place. Check out the guided tour to discover every feature!",
+  "Hello and welcome to Chatter! 🌟 I'm ChatterBot, your AI buddy powered by Google Gemini. A quick guided tour is about to show you around - or ask me anything and I'll help!",
+  "Hey! You've just entered Chatter - modern tech meets amazing UX! 🚀 I'm ChatterBot. Your personalized tour is starting soon, but feel free to ask me anything first!",
 ];
 
 // Send welcome message from ChatterBot to new users
@@ -55,27 +55,23 @@ export const sendWelcomeMessage = async userId => {
       user.fullName || user.name
     }! 🎉 Welcome to Chatter!
 
-I'm ChatterBot, your friendly AI assistant powered by Google Gemini. I'm here to help you get the most out of this platform!
+I'm **ChatterBot**, your AI assistant powered by Google Gemini. A guided app tour is about to launch to help you find your way around - it only takes 30 seconds!
 
-🌟 **What makes Chatter awesome:**
-• Lightning-fast real-time messaging with Socket.IO
-• Smart notifications that won't bug you during active conversations
-• Beautiful, modern design built with React & TypeScript
-• AI-powered conversations (that's me!)
-• Easy guest access for friends
-• Robust security with CAPTCHA protection
+🌟 **Here's what Chatter can do:**
+• ⚡ Real-time messaging with instant delivery (Socket.IO)
+• 👥 Friend system — send requests, accept, and start chatting
+• 🤖 AI chat — that's me! Ask me anything, any time
+• 🔔 Smart notifications that respect your active chats
+• 🎨 Profile customization with avatars
+• 🔒 Secure login (JWT + argon2) or quick guest access
 
-🚀 **About the creator:** Sachin Kumar built this platform to showcase modern web development skills and create an amazing user experience!
+💡 **Quick start tips:**
+1. Browse the **Users tab** to find people and send friend requests
+2. Once a request is accepted, click **Message** to open a chat
+3. I'm always pinned at the top — chat with me whenever you like!
+4. Use the **Search** box to quickly find anyone by name
 
-💡 **I can help you with:**
-• Learning about Chatter's features
-• Understanding the technology behind the platform
-• Finding and connecting with friends
-• Customizing your profile and settings
-
-Ready to explore? What would you like to know first? 😊
-
-*Pro tip: Type "help" anytime if you need quick assistance!*`;
+**Ask me anything** — features, how-tos, or just for a chat. I'm here 24/7! 😊`;
 
     // Create welcome message
     const welcomeMessage = new Message({
@@ -127,6 +123,48 @@ export const createAIBot = async () => {
 const getFallbackResponse = userMessage => {
   const message = userMessage.toLowerCase();
 
+  // Tour / help patterns
+  if (
+    message.includes("tour") ||
+    message.includes("guide") ||
+    message.includes("how do i") ||
+    message.includes("how to") ||
+    message.includes("tutorial") ||
+    (message.includes("help") && message.length < 30)
+  ) {
+    return "I can walk you through everything! 🗺️ Here's a quick guide:\n\n1️⃣ **Users tab** — browse everyone, send friend requests\n2️⃣ **Received/Sent tabs** — manage your friend requests\n3️⃣ **Friends tab** — see your connections and start chats\n4️⃣ **Search box** — find anyone by name instantly\n5️⃣ **Message button** — opens a floating chat window\n\nI'm always pinned at the top of the list — just click me to chat anytime! 😊";
+  }
+
+  // Friends / friend request patterns
+  if (
+    message.includes("friend") ||
+    message.includes("connect") ||
+    message.includes("add user") ||
+    message.includes("request")
+  ) {
+    return "Making friends on Chatter is easy! 👥 Go to the **Users** tab, find someone you want to connect with, and click **Add Friend**. They'll get a notification, and once they accept, you can start chatting. Use the **Received** tab to accept requests from others!";
+  }
+
+  // Profile / settings patterns
+  if (
+    message.includes("profile") ||
+    message.includes("avatar") ||
+    message.includes("picture") ||
+    message.includes("setting")
+  ) {
+    return "You can update your profile by clicking your avatar or name in the top header! 🎨 From there you can change your display name, upload a profile photo, and update personal info. Make it yours!";
+  }
+
+  // Messaging / chat patterns
+  if (
+    message.includes("message") ||
+    message.includes("chat") ||
+    message.includes("talk") ||
+    message.includes("send")
+  ) {
+    return "Chatting on Chatter is super easy! 💬 Go to the **Friends** tab and click the **Message** button next to any friend. A floating chat window pops up — you can have multiple conversations open at once, and messages are delivered in real-time via Socket.IO!";
+  }
+
   // Greeting patterns
   if (
     message.includes("hello") ||
@@ -165,9 +203,9 @@ const getFallbackResponse = userMessage => {
     message.includes("feature")
   ) {
     const chatterResponses = [
-      "Chatter is absolutely incredible! 🚀 Created by Sachin Kumar, it's a cutting-edge messaging app with real-time Socket.IO messaging, AI integration (that's me!), and beautiful React/TypeScript frontend. What specific feature would you like to know about?",
-      "You're using one of the coolest messaging platforms ever built! Chatter has everything - real-time messaging, AI chatbot, guest login, friend systems, and it's built with modern tech like React, Node.js, and MongoDB. Pretty amazing, right?",
-      "Chatter is a masterpiece! 🔥 Sachin Kumar built this with React, TypeScript, Tailwind CSS, Node.js, and even integrated Google Gemini AI. It's fast, secure, beautiful, and has features like guest login and real-time messaging. What would you like to explore first?",
+      "Chatter is a full-featured messaging platform built by Sachin Kumar! 🚀 Key features: real-time Socket.IO messaging, AI chatbot (me!), friend system, smart notifications, guest login, and a beautiful React/TypeScript UI. What specific feature interests you?",
+      "You're using one of the coolest messaging platforms built by a solo developer! Chatter has real-time messaging, AI chat, guest login, friend requests, profile customization, and email verification — all in a clean, modern UI. Pretty impressive, right?",
+      "Chatter is a production-ready app! 🔥 Built with React, TypeScript, Tailwind, Node.js, Express, MongoDB, Socket.IO, and Google Gemini AI. It even has CAPTCHA protection and comprehensive Cypress e2e tests. What would you like to explore?",
     ];
     return chatterResponses[
       Math.floor(Math.random() * chatterResponses.length)
@@ -213,7 +251,7 @@ const getFallbackResponse = userMessage => {
 // Generate AI response using Google Gemini
 export const generateAIResponse = async (
   userMessage,
-  conversationHistory = [],
+  conversationHistory = []
 ) => {
   try {
     // Check if Gemini API key is available
@@ -231,43 +269,42 @@ export const generateAIResponse = async (
             .join("\n")}\n\n`
         : "";
 
-    const prompt = `${contextPrompt}You are ChatterBot, a helpful AI assistant in the Chatter messaging platform. You're powered by Google Gemini and you understand the platform well.
+    const prompt = `${contextPrompt}You are ChatterBot, a smart and friendly AI assistant in the Chatter messaging platform, powered by Google Gemini. Help users get the most out of the app.
 
 ## About Chatter
 
-**Creator:** Sachin Kumar - A passionate full-stack developer who built this platform to showcase modern web development skills.
+**Creator:** Sachin Kumar — a full-stack developer who built Chatter to showcase modern web development skills.
 
-**Platform Features:**
-- Real-time messaging with Socket.IO
-- Smart notifications that respect active conversations  
-- AI chatbot integration (that's you!)
-- Guest login for easy testing
-- Friend system with requests
+**Core Features:**
+- Real-time messaging — instant delivery via Socket.IO
+- Friend system — send/accept requests, then chat with friends
+- Guided app tour — step-by-step walkthrough shown on first login
+- Smart notifications — no spam while you're actively chatting
+- AI chatbot (you!) — pinned at top of user list, always available
+- Guest login — quick access without registration
 - Email verification and password recovery
 - CAPTCHA security protection
-- Profile customization with avatars
+- Profile customization with avatars and bio
+- Floating chat windows — multiple conversations at once
+
+**How to use Chatter:**
+1. Browse the Users tab to find people → click Add Friend
+2. Accept incoming requests in the Received tab
+3. Go to Friends tab → click Message to open a chat window
+4. Use the Search box to find anyone by name
+5. Click ChatterBot (me!) at the top of any tab to chat with AI
 
 **Technology Stack:**
-- Frontend: React 19, TypeScript, Vite, Tailwind CSS, Zustand
-- Backend: Node.js, Express, MongoDB, Socket.IO
-- AI: Google Gemini integration
-- Security: JWT authentication, argon2, content filtering
+- Frontend: React 19, TypeScript, Vite 6, Tailwind CSS, Zustand, TanStack Query
+- Backend: Node.js, Express, MongoDB, Socket.IO, argon2 password hashing
+- AI: Google Gemini 1.5 Flash
+- Testing: Vitest (unit) + Cypress (e2e)
 
-**What makes it interesting:**
-- Modern, responsive design that works great on all devices
-- Real-time features for instant messaging
-- Clean, professional codebase with TypeScript
-- Comprehensive testing with Cypress
-- Production-ready architecture
-
-**Your role:**
-- Help users understand Chatter's features
-- Answer questions about the platform
-- Provide technical insights when asked
-- Be friendly and helpful in conversations
-- Share what makes the platform well-designed
-
-Keep responses natural and conversational (under 150 words). Be helpful without being overly promotional.
+**Your personality:**
+- Be concise, friendly, and helpful (under 120 words per response)
+- Give practical how-to answers when asked about features
+- Share interesting tech details when asked
+- Keep it conversational — not promotional
 
 User message: "${userMessage}"
 
@@ -321,7 +358,7 @@ export const sendAIMessage = async (req, res) => {
 export const getAIBot = async (req, res) => {
   try {
     const aiBot = await User.findOne({ name: "ChatterBot" }).select(
-      "-password",
+      "-password"
     );
 
     if (!aiBot) {
