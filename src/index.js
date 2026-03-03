@@ -64,15 +64,22 @@ app.use(
 // General rate limiter on all API routes
 app.use("/api/", apiLimiter);
 
-// DB guard — return 503 if MongoDB is not yet connected
-app.use("/api/", (req, res, next) => {
-  if (mongoose.connection.readyState !== 1) {
-    return res.status(503).json({
-      message:
-        "Service temporarily unavailable. Database is connecting, please retry in a few seconds.",
-    });
+// DB guard — wait up to 20 s for MongoDB to connect before returning 503.
+// On Render cold-starts the DB handshake can take several seconds after the
+// HTTP port opens, so we poll rather than failing immediately.
+app.use("/api/", async (req, res, next) => {
+  if (mongoose.connection.readyState === 1) return next();
+
+  const deadline = Date.now() + 30_000; // 30-second grace window
+  while (Date.now() < deadline) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    if (mongoose.connection.readyState === 1) return next();
   }
-  next();
+
+  return res.status(503).json({
+    message:
+      "Service temporarily unavailable. Database is connecting, please retry in a few seconds.",
+  });
 });
 
 // ── Routes ───────────────────────────────────────────────────────────────────

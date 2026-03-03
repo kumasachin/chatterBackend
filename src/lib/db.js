@@ -14,7 +14,7 @@ export const connectDB = async () => {
   }
 
   let attempt = 0;
-  let delayMs = 5000;
+  let delayMs = 1000; // start fast; backs off to 60 s max
 
   while (true) {
     attempt++;
