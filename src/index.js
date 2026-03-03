@@ -11,7 +11,7 @@ import helmet from "helmet";
 import mongoose from "mongoose";
 
 import { LocalPath } from "./config.js";
-import { connectDB } from "./lib/db.js";
+import { connectDB, lastDbError, dbAttempts } from "./lib/db.js";
 import { logger } from "./lib/logger.js";
 import { app, server } from "./lib/socket.js";
 import { errorHandler } from "./middleware/errorHandler.middleware.js";
@@ -93,10 +93,13 @@ app.use("/api/posts", postRoutes);
 // Health check — reports DB state
 app.get("/health", (req, res) => {
   const dbState = ["disconnected", "connected", "connecting", "disconnecting"];
+  const state = dbState[mongoose.connection.readyState] || "unknown";
   res.json({
-    status: "OK",
+    status: state === "connected" ? "OK" : "DEGRADED",
     timestamp: new Date().toISOString(),
-    db: dbState[mongoose.connection.readyState] || "unknown",
+    db: state,
+    dbAttempts,
+    dbError: lastDbError ?? undefined,
     routes: ["auth", "messages", "friend-requests", "ai", "analytics", "posts"],
   });
 });
