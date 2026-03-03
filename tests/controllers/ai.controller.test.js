@@ -3,12 +3,16 @@ import { jest, describe, it, expect, beforeEach } from "@jest/globals";
 // Constructor-style mock so `new User(...)` / `new Message(...)` work,
 // while static methods like findOne / create are also available.
 const mockUserModel = Object.assign(
-  jest.fn().mockImplementation(() => ({ save: jest.fn().mockResolvedValue({}) })),
+  jest
+    .fn()
+    .mockImplementation(() => ({ save: jest.fn().mockResolvedValue({}) })),
   { findOne: jest.fn(), create: jest.fn(), findById: jest.fn() }
 );
 
 const mockMessageModel = Object.assign(
-  jest.fn().mockImplementation(() => ({ save: jest.fn().mockResolvedValue({}) })),
+  jest
+    .fn()
+    .mockImplementation(() => ({ save: jest.fn().mockResolvedValue({}) })),
   { create: jest.fn(), find: jest.fn(), countDocuments: jest.fn() }
 );
 
@@ -44,13 +48,16 @@ jest.unstable_mockModule("../src/utils/messageCensorship.js", () => ({
 }));
 
 jest.unstable_mockModule("../src/lib/cloudinary.js", () => ({
-  default: { uploader: { upload: jest.fn().mockResolvedValue({ secure_url: "http://img" }) } },
+  default: {
+    uploader: {
+      upload: jest.fn().mockResolvedValue({ secure_url: "http://img" }),
+    },
+  },
 }));
 
 // Import after mocking
-const { sendWelcomeMessage, createAIBot } = await import(
-  "../../src/controllers/ai.controller.js"
-);
+const { sendWelcomeMessage, createAIBot } =
+  await import("../../src/controllers/ai.controller.js");
 
 describe("AI Controller - Welcome Message System", () => {
   // Shared fixtures — accessible in all nested describes
@@ -74,7 +81,6 @@ describe("AI Controller - Welcome Message System", () => {
   });
 
   describe("sendWelcomeMessage", () => {
-
     it("should send personalized welcome message to new user", async () => {
       // Mock database operations
       mockUserModel.findOne.mockResolvedValue(mockAIBot);
@@ -123,29 +129,18 @@ describe("AI Controller - Welcome Message System", () => {
       expect(welcomeMessage).toContain("Welcome to Chatter");
 
       // Verify ChatterBot introduction
-      expect(welcomeMessage).toContain("I'm ChatterBot");
+      expect(welcomeMessage).toContain("ChatterBot");
       expect(welcomeMessage).toContain("Google Gemini");
 
-      // Verify feature highlights
-      expect(welcomeMessage).toContain("real-time messaging with Socket.IO");
+      // Verify feature highlights reflect new guided-tour welcome message
+      expect(welcomeMessage).toContain("Socket.IO");
       expect(welcomeMessage).toContain("Smart notifications");
-      expect(welcomeMessage).toContain("React & TypeScript");
-      expect(welcomeMessage).toContain("AI-powered conversations");
+      expect(welcomeMessage).toContain("friend");
       expect(welcomeMessage).toContain("guest access");
-      expect(welcomeMessage).toContain("CAPTCHA protection");
+      expect(welcomeMessage).toContain("Search");
 
-      // Verify creator attribution
-      expect(welcomeMessage).toContain("Sachin Kumar built");
-
-      // Verify help information
-      expect(welcomeMessage).toContain("Learning about Chatter's features");
-      expect(welcomeMessage).toContain("Finding and connecting with friends");
-      expect(welcomeMessage).toContain("Customizing your profile");
-
-      // Verify call to action
-      expect(welcomeMessage).toContain("Ready to explore?");
-      expect(welcomeMessage).toContain("What would you like to know first?");
-      expect(welcomeMessage).toContain('Type "help" anytime');
+      // Verify call to action / help prompt
+      expect(welcomeMessage).toContain("Ask me anything");
     });
 
     it("should handle user with only name (no fullName)", async () => {
@@ -177,22 +172,18 @@ describe("AI Controller - Welcome Message System", () => {
         save: jest.fn().mockRejectedValue(new Error("DB Error")),
       }));
 
-
       const result = await sendWelcomeMessage(mockUser._id);
 
       expect(result).toBe(false);
-
     });
 
     it("should return false when user is not found", async () => {
       mockUserModel.findOne.mockResolvedValue(mockAIBot);
       mockUserModel.findById.mockResolvedValue(null);
 
-
       const result = await sendWelcomeMessage("nonexistent-user");
 
       expect(result).toBe(false);
-
     });
 
     it("should return false when message save fails", async () => {
@@ -204,11 +195,9 @@ describe("AI Controller - Welcome Message System", () => {
       };
       mockMessageModel.mockImplementation(() => mockMessage);
 
-
       const result = await sendWelcomeMessage(mockUser._id);
 
       expect(result).toBe(false);
-
     });
   });
 
@@ -223,11 +212,12 @@ describe("AI Controller - Welcome Message System", () => {
       };
       mockUserModel.mockImplementation(() => mockBot);
 
-
       const result = await createAIBot();
 
       // Verify bot lookup
-      expect(mockUserModel.findOne).toHaveBeenCalledWith({ name: "ChatterBot" });
+      expect(mockUserModel.findOne).toHaveBeenCalledWith({
+        name: "ChatterBot",
+      });
 
       // Verify bot creation
       expect(mockUserModel).toHaveBeenCalledWith({
@@ -259,7 +249,9 @@ describe("AI Controller - Welcome Message System", () => {
       const result = await createAIBot();
 
       // Verify only lookup was performed
-      expect(mockUserModel.findOne).toHaveBeenCalledWith({ name: "ChatterBot" });
+      expect(mockUserModel.findOne).toHaveBeenCalledWith({
+        name: "ChatterBot",
+      });
       expect(mockUserModel).not.toHaveBeenCalled(); // No new bot created
 
       expect(result).toBe(existingBot);
@@ -271,11 +263,9 @@ describe("AI Controller - Welcome Message System", () => {
         save: jest.fn().mockRejectedValue(new Error("Creation failed")),
       }));
 
-
       const result = await createAIBot();
 
       expect(result).toBe(null);
-
     });
   });
 
@@ -299,10 +289,10 @@ describe("AI Controller - Welcome Message System", () => {
       const messageCall = mockMessageModel.mock.calls[0][0];
       const welcomeMessage = messageCall.content;
 
-      // Should mention creator and platform
-      expect(welcomeMessage).toContain("Sachin Kumar");
-      expect(welcomeMessage).toContain("showcase");
+      // Should mention ChatterBot and platform
+      expect(welcomeMessage).toContain("ChatterBot");
       expect(welcomeMessage).toContain("Welcome to Chatter");
+      expect(welcomeMessage).toContain(businessUser.fullName);
     });
 
     it("should highlight technical achievements", async () => {
@@ -317,19 +307,15 @@ describe("AI Controller - Welcome Message System", () => {
       const messageCall = mockMessageModel.mock.calls[0][0];
       const welcomeMessage = messageCall.content;
 
-      // Should showcase technical stack
+      // Should showcase technical stack present in new welcome message
       const technicalTerms = [
         "Socket.IO",
-        "React",
-        "TypeScript",
         "Google Gemini",
-        "CAPTCHA",
-        "AI-powered",
-        "real-time messaging",
         "Smart notifications",
+        "argon2",
       ];
 
-      technicalTerms.forEach((term) => {
+      technicalTerms.forEach(term => {
         expect(welcomeMessage).toContain(term);
       });
     });
@@ -346,11 +332,10 @@ describe("AI Controller - Welcome Message System", () => {
       const messageCall = mockMessageModel.mock.calls[0][0];
       const welcomeMessage = messageCall.content;
 
-      // Should provide actionable guidance
-      expect(welcomeMessage).toContain("Ready to explore?");
-      expect(welcomeMessage).toContain("What would you like to know first?");
-      expect(welcomeMessage).toContain('Type "help"');
-      expect(welcomeMessage).toContain("Learning about Chatter's features");
+      // Should provide actionable guidance (matches new tour-focused welcome)
+      expect(welcomeMessage).toContain("Users tab");
+      expect(welcomeMessage).toContain("friend request");
+      expect(welcomeMessage).toContain("Ask me anything");
     });
   });
 });
