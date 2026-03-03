@@ -12,17 +12,27 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const sendVerificationEmail = async (user) => {
+export const sendVerificationEmail = async user => {
   try {
-    logger.debug({ userId: user._id, email: user.email }, "sendVerificationEmail called");
+    logger.debug(
+      { userId: user._id, email: user.email },
+      "sendVerificationEmail called",
+    );
 
-    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    if (
+      !process.env.SMTP_HOST ||
+      !process.env.SMTP_USER ||
+      !process.env.SMTP_PASS
+    ) {
       logger.error("Email configuration missing — SMTP_HOST/USER/PASS not set");
       return false;
     }
 
     if (!user.email) {
-      logger.error({ userId: user._id }, "sendVerificationEmail: user has no email");
+      logger.error(
+        { userId: user._id },
+        "sendVerificationEmail: user has no email",
+      );
       return false;
     }
 
@@ -61,16 +71,26 @@ export const sendVerificationEmail = async (user) => {
     await transporter.sendMail(mailOptions);
     return true;
   } catch (error) {
-    logger.error({ err: error.message, email: user.email }, "Verification email send failed");
+    logger.error(
+      { err: error.message, email: user.email },
+      "Verification email send failed",
+    );
     return false;
   }
 };
 
-export const sendWelcomeEmail = async (user) => {
+export const sendWelcomeEmail = async user => {
   try {
-    logger.debug({ userId: user._id, email: user.email }, "sendWelcomeEmail called");
+    logger.debug(
+      { userId: user._id, email: user.email },
+      "sendWelcomeEmail called",
+    );
 
-    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    if (
+      !process.env.SMTP_HOST ||
+      !process.env.SMTP_USER ||
+      !process.env.SMTP_PASS
+    ) {
       logger.warn("Email configuration missing — skipping welcome email");
       return false;
     }
@@ -210,22 +230,35 @@ export const sendWelcomeEmail = async (user) => {
     logger.info({ email: user.email }, "Welcome email sent");
     return true;
   } catch (error) {
-    logger.error({ err: error.message, email: user.email }, "Welcome email send failed");
+    logger.error(
+      { err: error.message, email: user.email },
+      "Welcome email send failed",
+    );
     return false;
   }
 };
 
-export const sendResetVerificationEmail = async (user) => {
+export const sendResetVerificationEmail = async user => {
   try {
-    logger.debug({ userId: user._id, email: user.email }, "sendResetVerificationEmail called");
+    logger.debug(
+      { userId: user._id, email: user.email },
+      "sendResetVerificationEmail called",
+    );
 
-    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    if (
+      !process.env.SMTP_HOST ||
+      !process.env.SMTP_USER ||
+      !process.env.SMTP_PASS
+    ) {
       logger.error("Email configuration missing — SMTP vars not set");
       return false;
     }
 
     if (!user.email) {
-      logger.error({ userId: user._id }, "sendResetVerificationEmail: user has no email");
+      logger.error(
+        { userId: user._id },
+        "sendResetVerificationEmail: user has no email",
+      );
       return false;
     }
 
@@ -269,7 +302,10 @@ export const sendResetVerificationEmail = async (user) => {
     await transporter.sendMail(mailOptions);
     return true;
   } catch (error) {
-    logger.error({ err: error.message, email: user.email }, "Password reset email send failed");
+    logger.error(
+      { err: error.message, email: user.email },
+      "Password reset email send failed",
+    );
     return false;
   }
 };

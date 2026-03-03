@@ -251,7 +251,7 @@ const getFallbackResponse = userMessage => {
 // Generate AI response using Google Gemini
 export const generateAIResponse = async (
   userMessage,
-  conversationHistory = []
+  conversationHistory = [],
 ) => {
   try {
     // Check if Gemini API key is available
@@ -358,7 +358,7 @@ export const sendAIMessage = async (req, res) => {
 export const getAIBot = async (req, res) => {
   try {
     const aiBot = await User.findOne({ name: "ChatterBot" }).select(
-      "-password"
+      "-password",
     );
 
     if (!aiBot) {

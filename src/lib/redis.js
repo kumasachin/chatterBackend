@@ -13,7 +13,7 @@ export const REDIS_ENABLED = Boolean(process.env.REDIS_URL);
 
 if (!REDIS_ENABLED) {
   logger.warn(
-    "REDIS_URL not configured — Redis features disabled, using in-memory fallbacks"
+    "REDIS_URL not configured — Redis features disabled, using in-memory fallbacks",
   );
 }
 
@@ -28,7 +28,7 @@ function createClient(opts = {}) {
   });
 
   client.on("connect", () =>
-    logger.info({ url: process.env.REDIS_URL }, "Redis connected")
+    logger.info({ url: process.env.REDIS_URL }, "Redis connected"),
   );
   client.on("error", err => logger.error({ err }, "Redis error"));
   client.on("reconnecting", () => logger.warn("Redis reconnecting…"));

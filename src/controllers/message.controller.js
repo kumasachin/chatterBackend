@@ -166,7 +166,7 @@ export const sendMessage = async (req, res) => {
 
           const senderSocketIds = getReceiverSocketIds(senderId);
           if (senderSocketIds.length > 0) {
-            senderSocketIds.forEach((socketId) => {
+            senderSocketIds.forEach(socketId => {
               io.to(socketId).emit("newMessage", aiMessage);
             });
           }

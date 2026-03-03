@@ -38,7 +38,7 @@ const io = new Server(server, {
   } catch (err) {
     logger.warn(
       { err },
-      "Socket.io Redis adapter unavailable — using in-memory adapter"
+      "Socket.io Redis adapter unavailable — using in-memory adapter",
     );
   }
 })();

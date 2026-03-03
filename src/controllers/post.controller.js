@@ -10,11 +10,11 @@ import { cacheGet, cacheSet, cacheDel } from "../lib/redis.js";
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const FEED_CACHE_TTL = 30; // seconds
 
-function feedCacheKey (userId, page) {
+function feedCacheKey(userId, page) {
   return `feed:${userId}:${page}`;
 }
 
-async function uploadImages (images = []) {
+async function uploadImages(images = []) {
   return Promise.all(
     images.map(img =>
       cloudinary.uploader.upload(img, { folder: "chatter/posts" }),
@@ -105,7 +105,9 @@ export const getFeed = async (req, res, next) => {
       },
     };
 
-    if (page === 1) { await cacheSet(feedCacheKey(userId, 1), result, FEED_CACHE_TTL); }
+    if (page === 1) {
+      await cacheSet(feedCacheKey(userId, 1), result, FEED_CACHE_TTL);
+    }
 
     res.json(result);
   } catch (err) {

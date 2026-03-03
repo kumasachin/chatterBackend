@@ -5,11 +5,12 @@ import { logger } from "../lib/logger.js";
 export const protectRoute = async (req, res, next) => {
   try {
     // Check Authorization header first (Bearer <token>), fall back to cookie
-    const token =
-      req.headers.authorization?.split(" ")[1] || req.cookies.jwt;
+    const token = req.headers.authorization?.split(" ")[1] || req.cookies.jwt;
 
     if (!token) {
-      return res.status(401).json({ message: "Unauthorized - No token provided" });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized - No token provided" });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

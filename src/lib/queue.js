@@ -54,7 +54,7 @@ if (REDIS_ENABLED) {
       await transport.sendMail({ to, subject, html, text });
       logger.info({ jobId: job.id, to }, "Email sent via queue");
     },
-    { connection }
+    { connection },
   );
   emailWorker.on("failed", (job, err) => {
     logger.error({ jobId: job?.id, err }, "Email job failed");
@@ -76,7 +76,7 @@ if (REDIS_ENABLED) {
     async job => {
       logger.info({ jobId: job.id, type: job.name }, "Media job processed");
     },
-    { connection }
+    { connection },
   );
   mediaWorker.on("failed", (job, err) => {
     logger.error({ jobId: job?.id, err }, "Media job failed");

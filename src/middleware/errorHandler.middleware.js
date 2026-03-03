@@ -26,7 +26,7 @@ export const errorHandler = (err, req, res, _next) => {
   if (err.name === "ValidationError") {
     statusCode = 400;
     message = Object.values(err.errors)
-      .map((e) => e.message)
+      .map(e => e.message)
       .join(", ");
   }
 
